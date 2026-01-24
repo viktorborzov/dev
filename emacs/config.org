@@ -75,24 +75,39 @@
       (add-hook 'post-command-hook #'mirrored-hl-line)))
 
   ;;(global-set-key (kbd "<f2>") #'toggle-mirrored-hl)
-  (define-key global-map (kbd "<f5>") #'global-hl-line-mode)
+  (define-key global-map (kbd "<f2>") #'global-hl-line-mode)
 
   ;; ==================== Theme ====================
 
-  (add-to-list 'custom-theme-load-path "~/dev/emacs/themes")
+(define-key global-map (kbd "<f5>") #'modus-themes-toggle)
 
-  ;; (define-key global-map (kbd "<f5>") #'modus-themes-toggle)
-  ;; (setq modus-themes-italic-constructs nil
-  ;;       modus-themes-bold-constructs t
-  ;;       modus-themes-mixed-fonts nil
-  ;;       modus-themes-variable-pitch-ui t
-  ;;       modus-themes-disable-other-themes nil
-  ;;       modus-themes-prompts nil
-  ;;       modus-themes-completions nil
-  ;;       modus-themes-org-blocks nil
-  ;;       modus-themes-headings nil)
-  ;; (load-theme 'modus-operandi t)
-  (load-theme 'gruber-darkest t)
+(setq modus-vivendi-palette-overrides
+      '((keyword "#ffdd33")
+	(builtin "#ffdd33")
+	(comment "#cc8c3c")
+	(string "#73c936")
+	(constant "#95a99f")
+	(fnname "#96a6c8")
+	(type "#95a99f")
+	(variable "#f4f4ff")
+	(preprocessor "#95a99f")
+	(docstring "#73c936")))
+
+(setq modus-operandi-palette-overrides
+      '((keyword "#9a7800")
+	(builtin "#9a7800")
+	(comment "#8b5a2b")
+	(string "#3a7500")
+	(constant "#5a7a6a")
+	(fnname "#4a5a8a")
+	(type "#5a7a6a")
+	(variable "#303040")
+	(preprocessor "#5a7a6a")
+	(docstring "#3a7500")))
+
+
+(load-theme 'modus-vivendi t)
+
   (add-to-list 'default-frame-alist '(font . "Iosevka-12"))
   (add-hook 'after-init-hook (lambda () (set-face-attribute 'default nil :font "Iosevka-12")))
 
