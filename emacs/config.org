@@ -81,18 +81,6 @@
 
 (define-key global-map (kbd "<f5>") #'modus-themes-toggle)
 
-(setq modus-vivendi-palette-overrides
-      '((keyword "#ffdd33")
-	(builtin "#ffdd33")
-	(comment "#cc8c3c")
-	(string "#73c936")
-	(constant "#95a99f")
-	(fnname "#96a6c8")
-	(type "#95a99f")
-	(variable "#f4f4ff")
-	(preprocessor "#95a99f")
-	(docstring "#73c936")))
-
 (setq modus-operandi-palette-overrides
       '((keyword "#9a7800")
 	(builtin "#9a7800")
@@ -104,6 +92,29 @@
 	(variable "#303040")
 	(preprocessor "#5a7a6a")
 	(docstring "#3a7500")))
+
+(setq modus-vivendi-palette-overrides
+      '(;; UI elements
+        (bg-main "#161616")
+        (fg-main "#cdaa7d")
+        (fg-dim "#8a8070")
+        (fg-alt "#9a9080")
+        (cursor "#40ff40")
+        (bg-hl-line "#191970")
+        ;; Region/selection - keep syntax visible
+        (bg-region "#303050")          ; muted selection background
+        (fg-region unspecified)        ; keeps syntax colors instead of override
+        ;; Syntax - matching operandi structure, warmed up
+        (keyword "#cd950c")            ; gold (accent)
+        (builtin "#cd950c")            ; gold (accent)
+        (comment "#908070")            ; warm gray-brown
+        (string "#a09850")             ; warmer gold-green
+        (constant "#9a9a80")           ; warm sage
+        (fnname "#9a9a90")             ; warm muted stone (was blue)
+        (type "#9a9a80")               ; warm sage
+        (variable "#cdaa7d")           ; burlywood
+        (preprocessor "#9a9a80")       ; warm sage
+        (docstring "#908070")))        ; warm gray-brown
 
 
 (load-theme 'modus-vivendi t)
