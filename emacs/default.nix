@@ -47,5 +47,6 @@ in (pkgs.emacsWithPackagesFromUsePackage {
   # Optionally provide extra packages not in the configuration file.
   extraEmacsPackages = epkgs: with epkgs; [
     nix-mode
+    vterm
   ];
 })
