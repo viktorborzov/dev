@@ -6,9 +6,9 @@
     (which-function-mode 1)
     (setq-default mode-line-format '("%m: %b:%l:%c (%*) " which-func-format))
     (blink-cursor-mode 0)
-    (menu-bar-mode 1)
+    (menu-bar-mode 0)
     (tool-bar-mode 0)
-    (scroll-bar-mode 1)
+    (scroll-bar-mode 0)
     ;; Make emacs detect sentences as period + single space
     (setq sentence-end-double-space nil)
     ;; Replace when paste
@@ -75,6 +75,7 @@
 
     ;;(global-set-key (kbd "<f2>") #'toggle-mirrored-hl)
     (define-key global-map (kbd "<f2>") #'global-hl-line-mode)
+    (define-key global-map (kbd "<f6>") #'vterm-other-window)
 
     ;; ==================== Theme ====================
 
