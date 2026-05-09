@@ -1,99 +1,155 @@
 * Basics
 
 #+begin_src emacs-lisp :tangle yes
-    (setq ring-bell-function 'ignore)
-    (global-visual-line-mode 1)
-    (which-function-mode 1)
-    (setq-default mode-line-format '("%m: %b:%l:%c (%*) " which-func-format))
-    (blink-cursor-mode 0)
-    (menu-bar-mode 0)
-    (tool-bar-mode 0)
-    (scroll-bar-mode 0)
-    ;; Make emacs detect sentences as period + single space
-    (setq sentence-end-double-space nil)
-    ;; Replace when paste
-    (delete-selection-mode 1)
-    (global-set-key (kbd "<pinch>") nil)
-    ;; Backups
-    (setq backup-directory-alist `(("." . "~/.saves")))
+  (setq ring-bell-function 'ignore)
+  (global-visual-line-mode 1)
+  (which-function-mode 1)
+  (blink-cursor-mode 0)
+  (menu-bar-mode 1)
+  (tool-bar-mode 0)
+  (scroll-bar-mode 1)
+  (setq gdb-many-windows t)
+  (setq gdb-show-changed-values t)
+  ;; Prevents cursor blinking in terminal 
+  (setq visible-cursor nil)
+  ;; Make emacs detect sentences as period + single space
+  (setq sentence-end-double-space nil)
+  ;; Replace when paste
+  (delete-selection-mode 1)
+  (global-set-key (kbd "<pinch>") nil)
+  ;; Backups
+  (setq backup-directory-alist `(("." . "~/.saves")))
+  (setq dired-isearch-filenames t)
+  (setq delete-by-moving-to-trash t)
 
-    ;; Programming
-    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-    (setq c-default-style "linux")
+  ;; Programming
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (setq c-default-style "stroustrup")
 
-    ;; Use spaces for indentations
-    (setq indent-tabs-mode nil)
+  (defun my/regen-tags ()
+    (interactive)
+    (shell-command "find . -name '*.[ch]' | xargs etags")
+    (message "TAGS regenerated"))
 
-    ;; ==================== Keybindings ====================
+  (defun my-prog-mode-keys ()
+    (local-set-key (kbd "C-c t") #'my/regen-tags))
+  
+  (add-hook 'prog-mode-hook #'my-prog-mode-keys)
 
-    (global-set-key (kbd "M-p") #'scroll-down-line)
-    (global-set-key (kbd "M-n") #'scroll-up-line)
 
-    ;; Windows
-    (global-set-key (kbd "S-<left>")  #'windmove-left)
-    (global-set-key (kbd "S-<right>") #'windmove-right)
-    (global-set-key (kbd "S-<up>")    #'windmove-up)
-    (global-set-key (kbd "S-<down>")  #'windmove-down)
+  ;; Use spaces for indentations
+  (setq indent-tabs-mode nil)
 
-    ;; Custom actions
-    (defun rc/duplicate-dwim() (interactive) (duplicate-dwim ()) (next-line))
-    (global-set-key (kbd "C-,") 'rc/duplicate-dwim)
+  ;; ====================== Projects =====================
 
-    ;; newline
-    ;; (define-key global-map (kbd "<M-return>") (lambda ()
-    ;;                                             (interactive)
-    ;;                                             (move-end-of-line 1)
-    ;;                                             (newline-and-indent)))
-    ;; (define-key global-map (kbd "<M-S-return>") (lambda ()
-    ;;                                               (interactive)
-    ;;                                               (move-beginning-of-line 1)
-    ;;                                               (newline)
-    ;;                                               (previous-line)
-    ;;                                               (indent-according-to-mode)))
+  (setq uniquify-buffer-name-style 'forward)
+  
+  (setq tramp-default-method "ssh")
+  
+  ;; Custom project detection (.project wins over .git)
+  (defun my/project-find-function (dir)
+    (let ((root (locate-dominating-file dir ".project")))
+      (when root
+        (list 'my-project root))))
+  
+  (with-eval-after-load 'project
+    ;; Ensure our finder runs before VC
+    (add-hook 'project-find-functions #'my/project-find-function)
+  
+    ;; Define behavior for custom project type
+    (cl-defmethod project-root ((project (head my-project)))
+      (cadr project))
+  
+    ;; Disable VC for these projects (prevents git errors)
+    (cl-defmethod project-vc-backend ((_project (head my-project)))
+      nil))
+  ;; ==================== Keybindings ====================
 
-    ;; ==================== Highlight line in all buffers ====================
-    (defvar mirrored-hl-overlays nil)
+  ;; a.k.a scroll line
+  (global-set-key (kbd "C-c s") #'scroll-lock-mode)
 
-    (defun mirrored-hl-line ()
-      (mapc #'delete-overlay mirrored-hl-overlays)
-      (setq mirrored-hl-overlays nil)
-      (dolist (win (window-list))
-        (with-selected-window win
-          (let ((ov (make-overlay (line-beginning-position)
-                                  (line-beginning-position 2))))
-            (overlay-put ov 'face 'hl-line)
-            (push ov mirrored-hl-overlays)))))
 
-    (defun toggle-mirrored-hl ()
-      (interactive)
-      (if (memq #'mirrored-hl-line post-command-hook)
-          (progn
-            (remove-hook 'post-command-hook #'mirrored-hl-line)
-            (mapc #'delete-overlay mirrored-hl-overlays)
-            (setq mirrored-hl-overlays nil))
-        (add-hook 'post-command-hook #'mirrored-hl-line)))
+  ;; Windows
+  (global-set-key (kbd "S-<left>")  #'windmove-left)
+  (global-set-key (kbd "S-<right>") #'windmove-right)
+  (global-set-key (kbd "S-<up>")    #'windmove-up)
+  (global-set-key (kbd "S-<down>")  #'windmove-down)
 
-    ;;(global-set-key (kbd "<f2>") #'toggle-mirrored-hl)
-    (define-key global-map (kbd "<f2>") #'global-hl-line-mode)
-    (define-key global-map (kbd "<f6>") #'vterm-other-window)
+  ;; Custom actions
+  (defun rc/duplicate-dwim() (interactive) (duplicate-dwim ()) (next-line))
+  (global-set-key (kbd "C-,") 'rc/duplicate-dwim)
 
-    ;; ==================== Theme ====================
+  ;; newline
+  ;; (define-key global-map (kbd "<M-return>") (lambda ()
+  ;;                                             (interactive)
+  ;;                                             (move-end-of-line 1)
+  ;;                                             (newline-and-indent)))
+  ;; (define-key global-map (kbd "<M-S-return>") (lambda ()
+  ;;                                               (interactive)
+  ;;                                               (move-beginning-of-line 1)
+  ;;                                               (newline)
+  ;;                                               (previous-line)
+  ;;                                               (indent-according-to-mode)))
+
+  ;; ==================== Highlight line in all buffers ====================
+  (defvar mirrored-hl-overlays nil)
+
+  (defun mirrored-hl-line ()
+    (mapc #'delete-overlay mirrored-hl-overlays)
+    (setq mirrored-hl-overlays nil)
+    (dolist (win (window-list))
+      (with-selected-window win
+        (let ((ov (make-overlay (line-beginning-position)
+                                (line-beginning-position 2))))
+          (overlay-put ov 'face 'hl-line)
+          (push ov mirrored-hl-overlays)))))
+
+  (defun toggle-mirrored-hl ()
+    (interactive)
+    (if (memq #'mirrored-hl-line post-command-hook)
+        (progn
+          (remove-hook 'post-command-hook #'mirrored-hl-line)
+          (mapc #'delete-overlay mirrored-hl-overlays)
+          (setq mirrored-hl-overlays nil))
+      (add-hook 'post-command-hook #'mirrored-hl-line)))
+
+  ;;(global-set-key (kbd "<f2>") #'toggle-mirrored-hl)
+  (define-key global-map (kbd "<f2>") #'global-hl-line-mode)
+
+  ;; ==================== Theme ====================
 
   (define-key global-map (kbd "<f5>") #'modus-themes-toggle)
 
   (setq modus-operandi-palette-overrides
-        '((keyword "#9a7800")
-  	(builtin "#9a7800")
-  	(comment "#8b5a2b")
-          (fg-region unspecified)        ; keeps syntax colors instead of override
-  	(string "#3a7500")
-  	(constant "#5a7a6a")
-  	(fnname "#4a5a8a")
-  	(type "#5a7a6a")
-  	(variable "#303040")
-  	(preprocessor "#5a7a6a")
-  	(docstring "#3a7500")))
-
+        '(;; UI elements
+          (bg-main "#f4efe6")
+          (fg-main "#3a3530")
+          (fg-dim "#7a6e60")
+          (fg-alt "#6a6050")
+          (cursor "#2a8a2a")
+          (bg-hl-line "#e8e2d6")
+          ;; Region/selection
+          (bg-region "#d8d0c0")
+          (fg-region unspecified)
+          ;; Side edges / gutters - slightly darker than bg-main
+          (fringe "#ece7dc")             ; fringe (left/right edges)
+          (bg-line-number-active "#e8e2d6") ; current line number bg
+          (bg-line-number-inactive "#ece7dc") ; other line numbers bg
+          ;; Org source blocks
+          (bg-added-fringe "#ece7dc")
+          (bg-prose-block-contents "#eee9de") ; org src block interior
+          (bg-prose-block-delimiter "#e8e2d6") ; #+begin_src / #+end_src lines
+          ;; Syntax
+          (keyword "#9a7800")
+          (builtin "#9a7800")
+          (comment "#806850")
+          (string "#4a7500")
+          (constant "#5a7a6a")
+          (fnname "#6a6a58")
+          (type "#5a7a6a")
+          (variable "#3a3530")
+          (preprocessor "#5a7a6a")
+          (docstring "#806850")))
   (setq modus-vivendi-palette-overrides
         '(;; UI elements
           (bg-main "#161616")
@@ -120,38 +176,524 @@
 
   (load-theme 'modus-vivendi t)
 
-    (add-to-list 'default-frame-alist '(font . "Iosevka-12"))
-    (add-hook 'after-init-hook (lambda () (set-face-attribute 'default nil :font "Iosevka-12")))
+  (add-to-list 'default-frame-alist '(font . "Iosevka-12"))
+  (add-hook 'after-init-hook (lambda () (set-face-attribute 'default nil :font "Iosevka-12")))
 
-    ;; Show whitespaces and tabs in diff mode
-    (defun my-diff-show-whitespace ()
-      (setq-local indent-tabs-mode nil)
-      (setq-local whitespace-style
-                  '(face tabs spaces trailing tab-mark space-mark))
-      (setq-local whitespace-display-mappings
-                  '((space-mark 32 [183] [46])      ; · or .
-                    (tab-mark   9  [9655 9] [92 9]))) ; ▷\t fallback
-      (setq-local show-trailing-whitespace t)
-      (whitespace-mode 1))
+  ;; Show whitespaces and tabs in diff mode
+  (defun my-diff-show-whitespace ()
+    (setq-local indent-tabs-mode nil)
+    (setq-local whitespace-style
+                '(face tabs spaces trailing tab-mark space-mark))
+    (setq-local whitespace-display-mappings
+                '((space-mark 32 [183] [46])      ; · or .
+                  (tab-mark   9  [9655 9] [92 9]))) ; ▷\t fallback
+    (setq-local show-trailing-whitespace t)
+    (whitespace-mode 1))
 
-    (add-hook 'diff-mode-hook #'my-diff-show-whitespace)
+  (add-hook 'diff-mode-hook #'my-diff-show-whitespace)
 
-    ;; Startup screen
-    ;; (add-hook 'emacs-startup-hook
-    ;; 	  (lambda ()
-    ;; 	    (let* ((buffer-agenda "*Org Agenda*"))
-    ;; 	      (org-agenda-list)
-    ;; 	      (switch-to-buffer (get-buffer buffer-agenda))
-    ;; 	      )))
+;; ==================== Orgmode ====================
+  (global-set-key (kbd "C-c a") #'org-agenda)
+  (global-set-key (kbd "C-c c") #'org-capture)
 
-    (setq org-agenda-files '("~/org/notes.org"))
-    					; Source - https://stackoverflow.com/a
-    					; Posted by abo-abo
-    					; Retrieved 2025-12-21, License - CC BY-SA 3.0
-    
-    (setq org-refile-targets '(("~/org/notes.org" :maxlevel . 2)))
-    (setq org-log-done 'note)
+  (setq org-agenda-files '("~/org/notes.org"))
+  (setq org-refile-targets '(("~/org/notes.org" :maxlevel . 2)))
+  (setq org-log-done 'note)
+
+  (defun my/center-to-width (width)
+    "Center the buffer in the current window by setting equal side margins.
+  WIDTH is the desired content width in columns.  When called
+  interactively, prompt for WIDTH; a prefix argument supplies it
+  directly, and an empty response defaults to the window's total
+  width."
+    (interactive
+     (list (if current-prefix-arg
+               (prefix-numeric-value current-prefix-arg)
+             (read-number "Width: " (window-total-width)))))
+    (let* ((window (selected-window))
+           (total (window-total-width window))
+           (margin (/ (max 0 (- total width)) 2)))
+      (set-window-margins window margin margin)))
+  (global-set-key (kbd "C-c |") #'my/center-to-width)
+
+
+                                ;;; ----------------------------
+                                ;;; Pomodoro + Org-mode + Mode Line (no external packages)
+                                ;;; ----------------------------
+
+  (defvar my/pomo-state ""
+    "Current Pomodoro status string shown in mode line.")
+
+  (defvar my/pomo-end-time nil
+    "Absolute end time of current Pomodoro.")
+
+  (defvar my/pomo-length 25)
+  (defvar my/pomo-break 5)
+
+  (defun my/pomo-remaining ()
+    "Return remaining time string for mode line."
+    (if my/pomo-end-time
+        (let ((remain (max 0 (floor (- my/pomo-end-time (float-time))))))
+          (format " [%02d:%02d]"
+                  (/ remain 60)
+                  (% remain 60)))
+      ""))
+
+  (defun my/pomo-start ()
+    "Start a Pomodoro session."
+    (interactive)
+    (setq my/pomo-end-time
+          (float-time
+           (time-add (current-time)
+                     (seconds-to-time (* my/pomo-length 60)))))
+    (setq my/pomo-state " [POMO]")
+    (org-clock-in)
+    (force-mode-line-update)
+    (run-at-time (* my/pomo-length 60) nil #'my/pomo-end))
+
+  (defun my/pomo-end ()
+    "End Pomodoro and start break."
+    (interactive)
+    (setq my/pomo-state " [BREAK]")
+    (org-clock-out)
+    (force-mode-line-update)
+    (beep)
+    (run-at-time (* my/pomo-break 60) nil #'my/pomo-break-end))
+
+  (defun my/pomo-end ()
+    ;; start break and SET its timer
+    (interactive)
+    (setq my/pomo-end-time
+          (float-time
+           (time-add (current-time)
+                     (seconds-to-time (* my/pomo-break 60)))))
+    (setq my/pomo-state " [BREAK]")
+    (org-clock-out)
+    (force-mode-line-update)
+    (beep)
+    (run-at-time (* my/pomo-break 60) nil #'my/pomo-break-end))
+
+  (defun my/pomo-break-end ()
+    "End break and reset state."
+    (setq my/pomo-state "")
+    (setq my/pomo-end-time nil)
+    (force-mode-line-update)
+    (beep))
+
+  (defun my/org-next-subtree ()
+    (interactive)
+    (widen)
+    (org-next-visible-heading 1)
+    (org-narrow-to-subtree))
+  
+  (defun my/org-previous-subtree ()
+    (interactive)
+    (widen)
+    (org-previous-visible-heading 1)
+    (org-narrow-to-subtree))
+
+
+  (with-eval-after-load 'org
+    (define-key org-mode-map (kbd "C-c p s") #'my/pomo-start)
+    (define-key org-mode-map (kbd "C-c p e") #'my/pomo-end)
+    (define-key org-mode-map (kbd "M-n") #'my/org-next-subtree)
+    (define-key org-mode-map (kbd "M-p") #'my/org-previous-subtree)
+    )
+
+  (add-hook 'org-mode-hook #'org-fragtog-mode)
+
+  (setq org-preview-latex-default-process 'dvisvgm)
+  (setq org-preview-latex-image-type 'dvisvgm)
+
+  (setq org-startup-with-latex-preview t)
+  (with-eval-after-load 'org
+    (setq org-format-latex-options
+          (plist-put
+           (plist-put org-format-latex-options :scale 0.6)
+           :foreground 'default)))
+
+  (setq org-format-latex-header
+        "\\documentclass{article}
+                    \\usepackage{amsmath}
+                    \\usepackage{xcolor}
+                    \\pagestyle{empty}")
+
+
+  (defun org-babel-C-execute/filter-args (args)
+    (when-let* ((params (cadr args))
+                (stdin (cdr (assoc :stdin params)))
+                (res (org-babel-ref-resolve stdin))
+                (stdin (org-babel-temp-file "c-stdin-")))
+      (with-temp-file stdin (insert res))
+      (let* ((cmdline (assoc :cmdline params))
+             (cmdline-val (or (cdr cmdline) "")))
+        (when cmdline (setq params (delq cmdline params)))
+        (setq params
+              (cons (cons :cmdline (concat cmdline-val " <" stdin))
+                    params))
+        (setf (cadr args) params)))
+    args)
+
+
+  (defun org-babel-C-execute/filter-return (result)
+    (let* ((info   (org-babel-get-src-block-info t))
+           (params (nth 2 info))
+           (expect (cdr (assoc :expect params))))
+      (if (not expect)
+          result
+        (let* ((expected (org-babel-ref-resolve expect))
+               (res-str  (string-trim (format "%s" result)))
+               ;; ALWAYS drop anything after first newline-escaped expected marker
+               (base (car (split-string res-str "\n#+EXPECTED:" t))))
+          (concat base "\n#+EXPECTED:\n" (format "%s" expected))))))
+
+
+  (with-eval-after-load 'ob-C
+    (advice-add 'org-babel-C-execute :filter-args
+                #'org-babel-C-execute/filter-args)
+    (advice-add 'org-babel-C-execute :filter-return
+                #'org-babel-C-execute/filter-return))
+
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((C . t)))
+
+
+
+  (setq-default mode-line-format
+                '("%m: %b:%l:%c %p (%*) "
+                  (:eval my/pomo-state)
+                  (:eval (my/pomo-remaining))
+                  " "
+                  which-func-format))
+
+
+;; ==================== Magit ====================
+;; big projects hack
+(with-eval-after-load 'magit-log
+   (put 'magit-log-mode 'magit-log-default-arguments
+        '("-n256" "--decorate")))
+
+  (defun pulse-line (&rest _)
+        "Pulse the current line."
+        (pulse-momentary-highlight-one-line (point)))
+  
+  (dolist (command '(scroll-up-command scroll-down-command
+                     recenter-top-bottom other-window))
+    (advice-add command :after #'pulse-line))
+  
+  
+  (setq view-read-only t)
+  (global-set-key (kbd "C-c t r") #'tmux-project-runner)
+  (global-set-key (kbd "C-c t c") #'tmux-project-claude)
+  (global-set-key (kbd "C-c t s") #'tmux-project-send)
+  (global-set-key (kbd "C-c t p") #'tmux-project-pop)
+  (global-set-key (kbd "C-c t k") #'tmux-project-capture-runner)
+  (global-set-key (kbd "C-c t l") #'tmux-project-capture-claude)
+
+
 #+end_src
 
 #+RESULTS:
 : rc/duplicate-dwim
+
+
+Tmux config
+#+begin_src emacs-lisp :tangle yes
+
+  ;;; tmux-project.el --- Drive a tmux `work' session from Emacs -*- lexical-binding: t; -*-
+
+  ;; Treats a persistent tmux session as Emacs's process layer.  Works for
+  ;; both local projects and TRAMP-backed remote projects: every tmux
+  ;; command runs on whichever host owns `default-directory'.  No external
+  ;; scripts required — the remote machine only needs `tmux' on PATH.
+  ;;
+  ;; Commands (suggested bindings):
+  ;;   C-c t r  tmux-project-runner          ensure runner pane (idle shell)
+  ;;   C-c t c  tmux-project-claude          ensure claude pane
+  ;;   C-c t s  tmux-project-send            send a command to runner pane
+  ;;   C-c t p  tmux-project-pop             spawn foot attached to project window
+  ;;   C-c t k  tmux-project-capture-runner  capture runner output (read-only)
+  ;;   C-c t l  tmux-project-capture-claude  capture claude output (read-only)
+  ;;
+  ;; Setup:
+  ;;   (require 'tmux-project)
+  ;;   (global-set-key (kbd "C-c t r") #'tmux-project-runner)
+  ;;   (global-set-key (kbd "C-c t c") #'tmux-project-claude)
+  ;;   (global-set-key (kbd "C-c t s") #'tmux-project-send)
+  ;;   (global-set-key (kbd "C-c t p") #'tmux-project-pop)
+  ;;   (global-set-key (kbd "C-c t k") #'tmux-project-capture-runner)
+  ;;   (global-set-key (kbd "C-c t l") #'tmux-project-capture-claude)
+
+  (require 'project)
+  (require 'cl-lib)
+
+  (defgroup tmux-project nil
+    "Drive a persistent tmux session from Emacs."
+    :group 'tools)
+
+  (defcustom tmux-project-session "work"
+    "Name of the persistent tmux session."
+    :type 'string)
+
+  (defcustom tmux-project-terminal "foot"
+    "Local terminal emulator used by `tmux-project-pop'.
+  For remote projects, this terminal runs `ssh -t <host> tmux attach …'."
+    :type 'string)
+
+  (defcustom tmux-project-capture-lines 2000
+    "Number of lines of pane history to capture (passed as -S -N)."
+    :type 'integer)
+
+  (defvar tmux-project--last-send nil
+    "Last command sent via `tmux-project-send', used as default for re-runs.")
+
+  ;; ---------------------------------------------------------------------------
+  ;; Project + remote awareness
+  ;; ---------------------------------------------------------------------------
+
+  (defun tmux-project--root ()
+    "Return current project's root.  Strips TRAMP prefix for remote projects.
+  Errors if there's no current project."
+    (let ((proj (project-current)))
+      (unless proj
+        (user-error "No current project"))
+      (let ((root (directory-file-name (expand-file-name (project-root proj)))))
+        (if (file-remote-p root)
+            (file-remote-p root 'localname)
+          root))))
+
+  (defun tmux-project--name ()
+    "Return the tmux window name for the current project (basename of root)."
+    (file-name-nondirectory (tmux-project--root)))
+
+  (defun tmux-project--remote-ssh-target ()
+    "Return `user@host' (or `host') for `default-directory', or nil if local."
+    (when (file-remote-p default-directory)
+      (let ((host (file-remote-p default-directory 'host))
+            (user (file-remote-p default-directory 'user)))
+        (if user (format "%s@%s" user host) host))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; tmux primitives — every command runs on the host of `default-directory'
+  ;; ---------------------------------------------------------------------------
+
+  (defun tmux-project--tmux (&rest args)
+    "Run `tmux ARGS' on the host of `default-directory'.
+  Return trimmed stdout, or signal an error on non-zero exit."
+    (with-temp-buffer
+      (let ((exit (apply #'process-file "tmux" nil t nil args)))
+        (unless (zerop exit)
+          (user-error "tmux %s failed: %s"
+                      (mapconcat #'identity args " ")
+                      (string-trim (buffer-string))))
+        (string-trim (buffer-string)))))
+
+  (defun tmux-project--tmux-noerr (&rest args)
+    "Like `tmux-project--tmux' but returns nil on failure instead of erroring.
+  Used for existence checks where failure is expected."
+    (with-temp-buffer
+      (when (zerop (apply #'process-file "tmux" nil t nil args))
+        (string-trim (buffer-string)))))
+
+  (defun tmux-project--session-exists-p ()
+    "Return non-nil if the tmux session exists on the current host."
+    (tmux-project--tmux-noerr "has-session" "-t" tmux-project-session))
+
+  (defun tmux-project--window-target (name)
+    "Return the tmux target string `<session>:<name>' for window NAME."
+    (format "%s:%s" tmux-project-session name))
+
+  (defun tmux-project--window-exists-p (name)
+    "Return non-nil if a window named NAME exists in the session."
+    (when (tmux-project--session-exists-p)
+      (let ((windows (tmux-project--tmux "list-windows"
+                                         "-t" tmux-project-session
+                                         "-F" "#W")))
+        (member name (split-string windows "\n" t)))))
+
+  (defun tmux-project--ensure-window ()
+    "Ensure a window for the current project exists; return its target."
+    (let ((name (tmux-project--name))
+          (path (tmux-project--root)))
+      (cond
+       ((not (tmux-project--session-exists-p))
+        (tmux-project--tmux "new-session" "-d"
+                            "-s" tmux-project-session
+                            "-n" name "-c" path))
+       ((not (tmux-project--window-exists-p name))
+        (tmux-project--tmux "new-window"
+                            "-t" (concat tmux-project-session ":")
+                            "-n" name "-c" path)))
+      (tmux-project--window-target name)))
+
+  ;; ---------------------------------------------------------------------------
+  ;; Pane management — find existing, adopt sole untitled, or split
+  ;; ---------------------------------------------------------------------------
+
+  (defun tmux-project--list-panes (window)
+    "Return list of (PANE-ID TITLE CURRENT-COMMAND) for WINDOW."
+    (let ((output (tmux-project--tmux "list-panes" "-t" window
+                                      "-F" "#{pane_id}\t#{pane_title}\t#{pane_current_command}")))
+      (cl-loop for line in (split-string output "\n" t)
+               for parts = (split-string line "\t")
+               collect (list (nth 0 parts)
+                             (or (nth 1 parts) "")
+                             (or (nth 2 parts) "")))))
+
+  (defun tmux-project--find-pane (window title)
+    "Return (PANE-ID TITLE CURRENT-COMMAND) of pane in WINDOW with TITLE, or nil."
+    (cl-find title (tmux-project--list-panes window)
+             :key #'cl-second :test #'string=))
+
+  (defun tmux-project--ensure-pane (title &optional command)
+    "Ensure pane titled TITLE is alive in current project's window.
+  If COMMAND is given, run it on creation, adoption, or when the existing
+  pane is stale (title matches but COMMAND isn't the running process —
+  e.g. claude exited).  Returns the pane target.
+
+  Lookup:
+  1. Pane with this title exists:
+     - if no COMMAND or COMMAND matches the running process → reuse as-is.
+     - else → pane is stale, re-run COMMAND in it.
+  2. Single pane not yet titled `claude' or `runner' → adopt, title, run.
+  3. Otherwise → split below, title, run."
+    (let* ((window (tmux-project--ensure-window))
+           (panes  (tmux-project--list-panes window))
+           (existing (cl-find title panes :key #'cl-second :test #'string=)))
+      (cond
+       ;; (1) Existing pane.
+       (existing
+        (let* ((pane-id (cl-first existing))
+               (current (cl-third existing))
+               (target  (format "%s.%s" window pane-id))
+               ;; Match by basename — `claude' the command may show up as
+               ;; `claude', `node', or similar depending on how it's invoked.
+               ;; A simple substring match on the command name is good enough.
+               (alive   (or (null command)
+                            (string-match-p (regexp-quote
+                                             (car (split-string command)))
+                                            current))))
+          (unless alive
+            (tmux-project--tmux "send-keys" "-t" target command "Enter"))
+          target))
+       ;; (2) Adopt sole untitled pane.
+       ((and (= 1 (length panes))
+             (not (member (cl-second (car panes)) '("claude" "runner"))))
+        (let* ((pane-id (cl-first (car panes)))
+               (target  (format "%s.%s" window pane-id)))
+          (tmux-project--tmux "select-pane" "-t" target "-T" title)
+          (when command
+            (tmux-project--tmux "send-keys" "-t" target command "Enter"))
+          target))
+       ;; (3) Split below.
+       (t
+        (let* ((new-id (tmux-project--tmux "split-window" "-t" window "-v" "-P"
+                                           "-F" "#{pane_id}"
+                                           "-c" "#{pane_current_path}"))
+               (target (format "%s.%s" window new-id)))
+          (tmux-project--tmux "select-pane" "-t" target "-T" title)
+          (when command
+            (tmux-project--tmux "send-keys" "-t" target command "Enter"))
+          target)))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; User commands
+  ;; ---------------------------------------------------------------------------
+
+  ;;;###autoload
+  (defun tmux-project-runner ()
+    "Ensure a `runner' pane exists in the current project's tmux window.
+  The pane runs an idle shell; commands can be pushed to it via
+  `tmux-project-send'.  Creates the window and the pane if needed."
+    (interactive)
+    (message "tmux runner: %s" (tmux-project--ensure-pane "runner")))
+
+  ;;;###autoload
+  (defun tmux-project-claude ()
+    "Ensure a `claude' pane runs in the current project's tmux window.
+  Creates the window and the pane if needed."
+    (interactive)
+    (message "tmux claude: %s" (tmux-project--ensure-pane "claude" "claude")))
+
+  ;;;###autoload
+  (defun tmux-project-send (command)
+    "Send COMMAND to the current project's runner pane.
+  Creates the runner pane on first use.  Does not touch claude.
+  Default value is the previous send, so `RET' re-runs."
+    (interactive
+     (list (read-string
+            (format "Send to runner%s: "
+                    (if tmux-project--last-send
+                        (format " [%s]" tmux-project--last-send)
+                      ""))
+            nil nil tmux-project--last-send)))
+    (setq tmux-project--last-send command)
+    (let ((target (tmux-project--ensure-pane "runner")))
+      (tmux-project--tmux "send-keys" "-t" target command "Enter")
+      (message "tmux runner ← %s" command)))
+
+  ;;;###autoload
+  (defun tmux-project-pop ()
+    "Spawn foot attached to the current project's tmux window.
+  For TRAMP projects, foot runs `ssh -t <host> tmux attach …' to reach
+  the remote tmux server."
+    (interactive)
+    (let* ((target     (tmux-project--ensure-window))
+           (ssh-target (tmux-project--remote-ssh-target))
+           ;; setsid detaches foot from Emacs so closing Emacs doesn't kill it.
+           (args (if ssh-target
+                     (list tmux-project-terminal "-e" "ssh" "-t" ssh-target
+                           "tmux" "attach-session" "-t" target)
+                   (list tmux-project-terminal "-e"
+                         "tmux" "attach-session" "-t" target))))
+      (apply #'call-process "setsid" nil 0 nil args)
+      (message "tmux pop: %s%s"
+               (if ssh-target (format "%s " ssh-target) "")
+               target)))
+
+  ;; ---------------------------------------------------------------------------
+  ;; Capture
+  ;; ---------------------------------------------------------------------------
+
+  (defun tmux-project--capture (title)
+    "Return captured text from pane titled TITLE in current project's window.
+  Errors if the pane doesn't exist."
+    (let* ((window  (tmux-project--ensure-window))
+           (pane-id (tmux-project--find-pane window title)))
+      (unless pane-id
+        (user-error "No `%s' pane in %s" title window))
+      (tmux-project--tmux "capture-pane" "-p" "-J"
+                          "-t" (format "%s.%s" window pane-id)
+                          "-S" (format "-%d" tmux-project-capture-lines))))
+
+  (defun tmux-project--show-capture (title)
+    "Capture pane TITLE and display in a read-only buffer."
+    (let* ((text (tmux-project--capture title))
+           (name (format "*tmux-%s: %s*" title (tmux-project--name)))
+           (buf  (get-buffer-create name)))
+      (with-current-buffer buf
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert text))
+        (goto-char (point-max))
+        (view-mode 1))
+      (pop-to-buffer buf)))
+
+  ;;;###autoload
+  (defun tmux-project-capture ()
+    "Capture the runner pane's output into a read-only buffer."
+    (interactive)
+    (tmux-project--show-capture "runner"))
+
+  ;;;###autoload
+  (defun tmux-project-capture-claude ()
+    "Capture the claude pane's output into a read-only buffer."
+    (interactive)
+    (tmux-project--show-capture "claude"))
+
+  (provide 'tmux-project)
+  ;;; tmux-project.el ends here
+
+#+end_src

@@ -48,6 +48,7 @@ in (pkgs.emacsWithPackagesFromUsePackage {
   extraEmacsPackages = epkgs: with epkgs; [
     nix-mode
     markdown-mode
-    vterm
+    org-fragtog
+    magit
   ];
 })
