@@ -49,6 +49,7 @@ in (pkgs.emacsWithPackagesFromUsePackage {
     nix-mode
     markdown-mode
     org-fragtog
+    org-appear
     magit
   ];
 })

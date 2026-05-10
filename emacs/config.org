@@ -293,6 +293,19 @@
     (org-narrow-to-subtree))
 
 
+;; Org
+  (setq org-hide-emphasis-markers t)
+  (use-package org-appear
+    :hook (org-mode . org-appear-mode)
+    :custom
+    (org-appear-autoemphasis t)
+    (org-appear-autolinks t)
+    (org-appear-autosubmarkers t))
+  
+  ;; Markdown
+  (use-package markdown-mode
+    :hook (markdown-mode . markdown-toggle-markup-hiding))
+
   (with-eval-after-load 'org
     (define-key org-mode-map (kbd "C-c p s") #'my/pomo-start)
     (define-key org-mode-map (kbd "C-c p e") #'my/pomo-end)
@@ -392,6 +405,11 @@
   (global-set-key (kbd "C-c t k") #'tmux-project-capture-runner)
   (global-set-key (kbd "C-c t l") #'tmux-project-capture-claude)
 
+
+(global-set-key (kbd "C-M-<down>")
+                (lambda () (interactive) (scroll-other-window 1)))
+(global-set-key (kbd "C-M-<up>")
+                (lambda () (interactive) (scroll-other-window -1)))
 
 #+end_src
 
