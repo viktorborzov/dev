@@ -322,7 +322,7 @@
   (with-eval-after-load 'org
     (setq org-format-latex-options
           (plist-put
-           (plist-put org-format-latex-options :scale 0.6)
+           (plist-put org-format-latex-options :scale 1)
            :foreground 'default)))
 
   (setq org-format-latex-header
@@ -388,22 +388,22 @@
    (put 'magit-log-mode 'magit-log-default-arguments
         '("-n256" "--decorate")))
 
-  (defun pulse-line (&rest _)
-        "Pulse the current line."
-        (pulse-momentary-highlight-one-line (point)))
+(defun pulse-line (&rest _)
+      "Pulse the current line."
+      (pulse-momentary-highlight-one-line (point)))
+
+(dolist (command '(scroll-up-command scroll-down-command
+                   recenter-top-bottom other-window))
+  (advice-add command :after #'pulse-line))
   
-  (dolist (command '(scroll-up-command scroll-down-command
-                     recenter-top-bottom other-window))
-    (advice-add command :after #'pulse-line))
   
-  
-  (setq view-read-only t)
-  (global-set-key (kbd "C-c t r") #'tmux-project-runner)
-  (global-set-key (kbd "C-c t c") #'tmux-project-claude)
-  (global-set-key (kbd "C-c t s") #'tmux-project-send)
-  (global-set-key (kbd "C-c t p") #'tmux-project-pop)
-  (global-set-key (kbd "C-c t k") #'tmux-project-capture-runner)
-  (global-set-key (kbd "C-c t l") #'tmux-project-capture-claude)
+(setq view-read-only t)
+(global-set-key (kbd "C-c t r") #'tmux-project-runner)
+(global-set-key (kbd "C-c t c") #'tmux-project-claude)
+(global-set-key (kbd "C-c t s") #'tmux-project-send)
+(global-set-key (kbd "C-c t p") #'tmux-project-pop)
+(global-set-key (kbd "C-c t k") #'tmux-project-capture-runner)
+(global-set-key (kbd "C-c t l") #'tmux-project-capture-claude)
 
 
 (global-set-key (kbd "C-M-<down>")
