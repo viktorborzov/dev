@@ -5,9 +5,9 @@
   (global-visual-line-mode 1)
   (which-function-mode 1)
   (blink-cursor-mode 0)
-  (menu-bar-mode 1)
+  (menu-bar-mode 0)
   (tool-bar-mode 0)
-  (scroll-bar-mode 1)
+  (scroll-bar-mode 0)
   (setq gdb-many-windows t)
   (setq gdb-show-changed-values t)
   ;; Prevents cursor blinking in terminal 
@@ -115,6 +115,7 @@
 
   ;;(global-set-key (kbd "<f2>") #'toggle-mirrored-hl)
   (define-key global-map (kbd "<f2>") #'global-hl-line-mode)
+  (define-key global-map (kbd "<f6>") #'eat-other-window)
 
   ;; ==================== Theme ====================
 
@@ -174,7 +175,7 @@
           (docstring "#908070")))        ; warm gray-brown
 
 
-  (load-theme 'modus-vivendi t)
+  (load-theme 'gruber-darker t)
 
   (add-to-list 'default-frame-alist '(font . "Iosevka-12"))
   (add-hook 'after-init-hook (lambda () (set-face-attribute 'default nil :font "Iosevka-12")))

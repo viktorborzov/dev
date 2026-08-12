@@ -46,10 +46,13 @@ in (pkgs.emacsWithPackagesFromUsePackage {
 
   # Optionally provide extra packages not in the configuration file.
   extraEmacsPackages = epkgs: with epkgs; [
+    gruber-darker-theme
     nix-mode
     markdown-mode
     org-fragtog
     org-appear
+    org-roam
     magit
+    eat
   ];
 })
