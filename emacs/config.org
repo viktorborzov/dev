@@ -177,6 +177,12 @@
 
   (load-theme 'gruber-darker t)
 
+  (with-eval-after-load 'org
+    (set-face-attribute 'org-block nil
+                        :background "#181818"
+                        :foreground "#e4d4ef"))
+
+
   (add-to-list 'default-frame-alist '(font . "Iosevka-12"))
   (add-hook 'after-init-hook (lambda () (set-face-attribute 'default nil :font "Iosevka-12")))
 
